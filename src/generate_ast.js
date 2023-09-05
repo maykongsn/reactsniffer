@@ -20,6 +20,7 @@ module.exports = function(source_code, type_checker = 'typescript') {
 			'functionSent',
 			'importMeta',
 			'jsx',
+			'tsx',
 			'logicalAssignment',
 			'nullishCoalescingOperator',
 			'numericSeparator',

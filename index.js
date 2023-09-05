@@ -173,6 +173,29 @@ for (const [key,component] of Object.entries(all_components)){
 	else 
 		out_component['PIS'] = 0;
 
+	if (component['anyType'].length > 0) {
+		has_smells = true;
+		details = '';
+		for(var anyType of component['anyType'])
+			details += "Line " + anyType['line_start'] + " - " + anyType['line_end'] + ": \n" + anyType['line'];
+	
+		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Any Type", details));
+		out_component['ANY'] = component['anyType'].length;
+	}
+	else
+		out_component['ANY'] = 0;
+		
+	if (component['nonNull'].length > 0) {
+		has_smells = true;
+		details = '';
+		for(var nonNull of component['nonNull'])
+			details += "Line " + nonNull['line_start'] + " - " + nonNull['line_end'] + ": \n" + nonNull['line'];
+				
+			csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Many Non-Null Assertions", details));
+			out_component['NNA'] = component['nonNull'].length;
+	}
+	else
+		out_component['NNA'] = 0;
 
 	if (has_smells){
 		number_of_smell_components++;

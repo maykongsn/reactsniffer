@@ -18,7 +18,9 @@ module.exports = function(ast) {
 			'JSXOutsideRender' : [],
 			'propsInitialState' : [],
 			'dom_manipulation' : [],
-			'functions': []
+			'functions': [],
+			'anyType': [],
+			'nonNull': [],
 		};
 		
 		recursive_search(value, component,components,functions);
@@ -171,7 +173,25 @@ function recursive_search(item,component,components,functions){
 				(item['object']['property'] && item['object']['property']['name'] && item['object']['property']['name'] == "props"))
 				component['properties'].push(value['name']);
 
-		}	
+		}
+		
+		if (value.type == "TSAnyKeyword") {
+			anyType = {};
+			anyType['line_start'] = value['loc']['start']['line'];
+			anyType['line_end'] = value['loc']['end']['line'];
+			anyType['line'] = read_files.get_lines(component['file_url'], anyType['line_start'], anyType['line_end']);
+			component['anyType'].push(anyType);
+		}
+
+		else if(key == 'object') {
+			if(value.type == "TSNonNullExpression") {
+				nonNull = {};
+				nonNull['line_start'] = value['loc']['start']['line'];
+				nonNull['line_end'] = value['loc']['end']['line'];
+				nonNull['line'] = read_files.get_lines(component['file_url'], nonNull['line_start'], nonNull['line_end']);
+				component['nonNull'].push(nonNull);
+			}
+		}
 		// Check for forceUpdate and directy dom manipulation
 		else if (key == 'callee'){
 			if (value['property'] && value['property']['name']){
