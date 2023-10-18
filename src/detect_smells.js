@@ -174,7 +174,69 @@ function recursive_search(item,component,components,functions){
 				component['properties'].push(value['name']);
 
 		}
+
+		if(
+			value.type === 'VariableDeclarator' &&
+      value.init &&
+      value.init.callee &&
+      value.init.callee.name === 'useState' &&
+      value.init.arguments.length > 0
+		) {
+			if(value.init.arguments[0].type === 'BooleanLiteral') {
+				multipleBooleans = {};
+				
+				multipleBooleans['line_start'] = value['loc']['start']['line'];
+				multipleBooleans['line_end'] = value['loc']['end']['line'];
+				multipleBooleans['line'] = read_files.get_lines(component['file_url'], multipleBooleans['line_start'], multipleBooleans['line_end']);
+				
+				component['multipleBooleans'].push(multipleBooleans);
+			}
+		}
+
+		if(value.type == "TSTypeAnnotation" && value.typeAnnotation.type == "TSUnionType") {
+			missingUnionType = {};
+
+			missingUnionType['line_start'] = value['loc']['start']['line'];
+			missingUnionType['line_end'] = value['loc']['end']['line'];
+			missingUnionType['line'] = read_files.get_lines(component['file_url'], missingUnionType['line_start'], missingUnionType['line_end']);
+			
+			component['missingUnionType'].push(missingUnionType);
+		}
+
+		if (value.type == 'TSEnumMember') {
+			if (value.initializer == undefined) {
+				enumImplicit = {};
+				
+				component['name'] = 'Enum'
+				enumImplicit['line_start'] = value['loc']['start']['line'];
+				enumImplicit['line_end'] = value['loc']['end']['line'];
+				enumImplicit['line'] = read_files.get_lines(component['file_url'], enumImplicit['line_start'], enumImplicit['line_end']);
+				
+				component['enumImplicit'].push(enumImplicit);
+				if(component['enumImplicit'].length > 1) {
+					component['enumImplicit'].pop()
+					components.pop()
+				}
+				components.push(component);
+			}
+    }
 		
+		if(value.type == "TSPropertySignature") {
+			if(value.key.name == 'children') {
+				if(value.typeAnnotation.typeAnnotation.type == "TSUndefinedKeyword" || value.typeAnnotation.typeAnnotation.type == "TSNeverKeyword") {
+					childrenPitfall = {};
+					
+					component['name'] = 'children'
+					childrenPitfall['line_start'] = value['loc']['start']['line'];
+					childrenPitfall['line_end'] = value['loc']['end']['line'];
+					childrenPitfall['line'] = read_files.get_lines(component['file_url'], childrenPitfall['line_start'], childrenPitfall['line_end']);
+					
+					component['childrenPitfall'].push(childrenPitfall);
+					components.push(component)
+				}
+			}
+		}
+
 		if (value.type == "TSAnyKeyword") {
 			anyType = {};
 			anyType['line_start'] = value['loc']['start']['line'];
@@ -182,7 +244,7 @@ function recursive_search(item,component,components,functions){
 			anyType['line'] = read_files.get_lines(component['file_url'], anyType['line_start'], anyType['line_end']);
 			component['anyType'].push(anyType);
 		}
-
+		
 		else if(key == 'object') {
 			if(value.type == "TSNonNullExpression") {
 				nonNull = {};

@@ -118,6 +118,15 @@ for (const [key,component] of Object.entries(all_components)){
 	else 
 		out_component['IIC'] = 'N'
 
+	if (component['multipleBooleans'].length > thresholds['N_bools']){
+		has_smells = true;
+		details = "Number of bool states: "+component['multipleBooleans'].length+"; Bools: "+component['multipleBooleans'][0].line;
+		csv_smells.push(createSmell(component['file_url'],out_component['Component'],"Multiple Booleans for State", details));
+		out_component['MB'] = 'Y';
+	}
+	else 
+		out_component['MB'] = 'N'
+
 	if (component['forceUpdate'].length > 0){
 		has_smells = true;
 		details = '';
@@ -197,6 +206,42 @@ for (const [key,component] of Object.entries(all_components)){
 	else
 		out_component['NNA'] = 0;
 
+	if (component['enumImplicit'].length > 0) {
+		has_smells = true;
+		details = '';
+		for(var enumImplicit of component['enumImplicit'])
+			details += "Line " + enumImplicit['line_start'] + " - " + enumImplicit['line_end'] + ": \n" + enumImplicit['line'];
+
+		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Enum Implicit Values", details));
+		out_component['EIV'] = component['enumImplicit'].length;
+	}
+	else
+		out_component['EIV'] = 0;
+
+	if (component['childrenPitfall'].length > 0) {
+		has_smells = true;
+		details = '';
+		for(var childrenPitfall of component['childrenPitfall'])
+			details += "Line " + childrenPitfall['line_start'] + " - " + childrenPitfall['line_end'] + ": \n" + childrenPitfall['line'];
+			
+		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Children Props Pitfall", details));
+		out_component['CPP'] = component['childrenPitfall'].length;
+	}
+	else
+		out_component['CPP'] = 0;
+
+	if (component['missingUnionType'].length > 0) {
+		has_smells = true;
+		details = '';
+		for(var missingUnionType of component['missingUnionType'])
+			details += "Line " + missingUnionType['line_start'] + " - " + missingUnionType['line_end'] + ": \n" + missingUnionType['line'];
+				
+		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Missing Union Type", details));
+		out_component['MUT'] = component['missingUnionType'].length;
+	}
+	else
+		out_component['MUT'] = 0;
+
 	if (has_smells){
 		number_of_smell_components++;
 		output_components.push(out_component);
@@ -215,7 +260,7 @@ if (output_components.length > 0){
 	const output_components_t = output_components.reduce((out, {id, ...x}) => { out[id] = x; return out}, {});
 	console.table(output_components_t);
 
-	console.log("Code smells (LC: Large component, TP:Too many props, IIC: Inheritance insteadof Composition; PIS: props in Initial State; DOM: Directly DOM manipulations; JSX: JSX outside the render method; FU: Force update; UC: Uncontrolled component)\n");
+	console.log("Code smells (LC: Large component, TP:Too many props, IIC: Inheritance insteadof Composition; MB: Multiple Booleans for State; PIS: props in Initial State; DOM: Directly DOM manipulations; JSX: JSX outside the render method; FU: Force update; UC: Uncontrolled component; ANY: Any Type; NNA: Many Non-Null Assertions; MUT: Missing Union Types Abstraction; EIV: Enum Implicit Values; CPP: Children Props Pitfall)\n");
 
 	csvWriter('components_smells.csv', csv_smells,Object.keys(csv_smells[0]),"components");
 }else
