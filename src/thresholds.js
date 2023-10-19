@@ -39,6 +39,7 @@ function calcQuartile(arr,q){
 exports.compute = function(all_components,all_files) {
 	loc = [];
 	N_props = [];
+	N_bools = [];
 	NM = [];
 	NA = [];
 	NM_JSX = [];
@@ -46,6 +47,7 @@ exports.compute = function(all_components,all_files) {
 	for (const component of all_components){
 		loc.push(component['loc']);
 		N_props.push(component['properties'].length);
+		N_bools.push(component['multipleBooleans'].length);
 		NM.push(component['classMethods'].length+component['functions'].length);
 		NM_JSX.push(component['JSXOutsideRender'].length);
 		NA.push(component['classProperties'].length);
@@ -67,6 +69,7 @@ exports.compute = function(all_components,all_files) {
 	//Components thresholds
 	thresholds['LOC_Component'] = calcQuartile(loc,95);
 	thresholds['N_props'] = calcQuartile(N_props,95);
+	thresholds['N_bools'] = calcQuartile(N_bools, 95);
 	thresholds['NM'] = calcQuartile(NM,95);
 	thresholds['NM_JSX'] = calcQuartile(NM_JSX,95);
 	// thresholds['NA'] = calcQuartile(NA,95);
@@ -87,6 +90,7 @@ exports.get_empirical_thresholds = function() {
 	//Components thresholds
 	thresholds['LOC_Component'] = 128;
 	thresholds['N_props'] = 13;
+	thresholds['N_bools'] = 4;
 	thresholds['NM'] = 4;
 	thresholds['NM_JSX'] = 3;
 	// thresholds['NA'] = 1;
