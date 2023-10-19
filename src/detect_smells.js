@@ -21,6 +21,10 @@ module.exports = function(ast) {
 			'functions': [],
 			'anyType': [],
 			'nonNull': [],
+			'enumImplicit': [],
+			'multipleBooleans': [],
+			'childrenPitfall': [],
+			'missingUnionType': [],
 		};
 		
 		recursive_search(value, component,components,functions);
