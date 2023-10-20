@@ -1,32 +1,19 @@
 # ReactSniffer 
 
-[![npm version](https://badge.fury.io/js/reactsniffer.svg)](https://www.npmjs.com/package/reactsniffer)
-[![license](https://img.shields.io/npm/l/reactsniffer)](https://github.com/fabiosferreira/reactsniffer/blob/main/LICENSE)
-
-[![NPM](https://nodei.co/npm/reactsniffer.png)](https://nodei.co/npm/reactsniffer/)
-
-ReactSniffer is a tool to support practitioners and researchers in detecting code smells in React-based web systems. The tool has two key components: a parser for analyzing the React files and a Smells Detector module for identifying the smells.
-
-<p align="center">
-    <img src="https://github.com/fabiosferreira/reactsniffer/blob/main/img/ReactSniffer-Architecture.png" width= "600px" />
-</p>
-
-The Parser is a Command-Line Interface (CLI) implemented in Node, which receives as input a valid front-end file and generates an Abstract Syntax Tree (AST) in a JSON format. The Smells Detector module is also implemented in Node and relies on the AST to search and inspect React elements. 
-
 ## Installation
 
 Use the package manager [npm](https://www.npmjs.com/) to install locally.
 
 ```bash
-npm install -g reactsniffer
+npm install -g git+https://github.com/maykongsn/reactsniffer.git
 ```
 
 ## Usage
 
-To use this tool you need to provide the repository directory (e.g., myproject/react/src)
+To use this tool you need to provide the repository directory (e.g., myproject/src)
 
 ```bash
-reactsniffer myproject/react/src
+reactsniffer myproject/src
 ```
 
 ### Output
@@ -50,7 +37,12 @@ ReactSniffer supports the following smells:
 | JSX outside the render method      | Implementing markup in multiple methods                         |
 | Uncontrolled Components            | A component that does not use props/state to handle form's data |
 | Large File                         | A file with several components and lines of code                |
-
+| Any Type                           | Defining the type any for an element in the code |
+| Many Non-Null Assertions           | Using non-null operator to indicate that a property will not be null or undefined |
+| Missing Union Type Abstraction     | When union types are not used with type aliases |
+| Enum Implicit Values               | Using enums without defining explicit values for them |
+| Multiple Booleans for State        | Defining many boolean-type states to define the component's state |
+| Children Props Pitfall             | Children props using any or types that can restrict JSX elements and affect readability      |
 
 ## License
 
