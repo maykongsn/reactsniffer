@@ -8,19 +8,19 @@ const csvWriter = require('./src/utils/csv-writer');
 var dirname = process.argv.slice(2)[0];
 
 if (!dirname.startsWith('/'))
-	dirname = process.cwd() + "/" +process.argv.slice(2);
+	dirname = process.cwd() + "/" + process.argv.slice(2);
 
 ast_react_files = filter_react_files(dirname);
 
 all_files = []
 all_components = []
 
-for(var [key, value] of Object.entries(ast_react_files)){
+for (var [key, value] of Object.entries(ast_react_files)) {
 	out = {}
-	out['id'] = Number(key)+1;
+	out['id'] = Number(key) + 1;
 	out['Large File'] = 'N';
 	out['File URL'] = value['url'];
-	out['File'] = value['url'].substring(value['url'].lastIndexOf('/')+1);
+	out['File'] = value['url'].substring(value['url'].lastIndexOf('/') + 1);
 	out['LOC'] = value['number_of_lines'];
 	file_components = detect_smells(value)['components'];
 	out['N_Components'] = file_components.length;
@@ -29,13 +29,13 @@ for(var [key, value] of Object.entries(ast_react_files)){
 
 	all_files.push(out);
 
-	for (const component of file_components){
+	for (const component of file_components) {
 		all_components.push(component);
 	}
 }
 
-const question = "Em uma escala de 1 a 5, como você avalia a relevância desse smell?"+
-	"\n1 = smell não é importante e, provavelmente, não será refatorado"+
+const question = "Em uma escala de 1 a 5, como você avalia a relevância desse smell?" +
+	"\n1 = smell não é importante e, provavelmente, não será refatorado" +
 	"\n5 = smell é muito importante e, provavelmente, será refatorado em breve.";
 
 output_components = []
@@ -45,11 +45,11 @@ csv_smells = []
 // thresholds = compute_thresholds.compute(all_components, all_files);
 thresholds = compute_thresholds.get_empirical_thresholds();
 
-var cont_smells_files = 0; 
-for (const file of all_files){
-	if(file['LOC'] > thresholds['LOC_File'] || file['N_Components'] > thresholds['N_Components'] || 
+var cont_smells_files = 0;
+for (const file of all_files) {
+	if (file['LOC'] > thresholds['LOC_File'] || file['N_Components'] > thresholds['N_Components'] ||
 		// file['N_Functions'] > thresholds['N_Functions'] || 
-		file['N_Imports'] > thresholds['N_Imports']){
+		file['N_Imports'] > thresholds['N_Imports']) {
 
 		file['id'] = ++cont_smells_files;
 		file['Large File'] = file['File'];
@@ -63,7 +63,7 @@ for (const file of all_files){
 
 cont_smells = 0;
 
-function createSmell(file_name, component, smell_name, details){
+function createSmell(file_name, component, smell_name, details) {
 	smell = {}
 	smell['id'] = ++cont_smells;
 	smell['file'] = file_name;
@@ -78,130 +78,130 @@ function createSmell(file_name, component, smell_name, details){
 }
 
 var number_of_smell_components = 0;
-for (const [key,component] of Object.entries(all_components)){
+for (const [key, component] of Object.entries(all_components)) {
 	has_smells = false;
 
 	out_component = {}
-	out_component['id'] = number_of_smell_components+1;
+	out_component['id'] = number_of_smell_components + 1;
 	out_component['File'] = component['file'];
 	out_component['Component'] = component['name'];
-	
 
-	classMethods = component['classMethods'].length+component['functions'].length;
+
+	classMethods = component['classMethods'].length + component['functions'].length;
 	if (component['loc'] > thresholds['LOC_Component'] || component['properties'].length > thresholds['N_props'] ||
-		component['classProperties'].length > thresholds['NA'] || 
-		(classMethods) > thresholds['NM']){
+		component['classProperties'].length > thresholds['NA'] ||
+		(classMethods) > thresholds['NM']) {
 		has_smells = true;
-		details = "LOC: "+component['loc']+ "; Number of props: "+component['properties'].length+ 
-			"; Number of attributes: "+component['classProperties'].length +
-			"; Number of methods: "+classMethods;
-		csv_smells.push(createSmell(component['file_url'],out_component['Component'],"Large Component", details));
-		out_component['LC'] = 'Y';		
-	}else
+		details = "LOC: " + component['loc'] + "; Number of props: " + component['properties'].length +
+			"; Number of attributes: " + component['classProperties'].length +
+			"; Number of methods: " + classMethods;
+		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Large Component", details));
+		out_component['LC'] = 'Y';
+	} else
 		out_component['LC'] = 'N'
 
-	if (component['properties'].length > thresholds['N_props']){
+	if (component['properties'].length > thresholds['N_props']) {
 		has_smells = true;
-		details = "Number of props: "+component['properties'].length+"; Props: "+component['properties'];
-		csv_smells.push(createSmell(component['file_url'],out_component['Component'],"Too many props", details));
+		details = "Number of props: " + component['properties'].length + "; Props: " + component['properties'];
+		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Too many props", details));
 		out_component['TP'] = 'Y';
 	}
-	else 
+	else
 		out_component['TP'] = 'N'
 
-	if (component.hasOwnProperty('superClass')){
+	if (component.hasOwnProperty('superClass')) {
 		has_smells = true;
-		details = "SuperClass: "+component['superClass'];
-		csv_smells.push(createSmell(component['file_url'],out_component['Component'],"Inheritance instead of composition", details));
+		details = "SuperClass: " + component['superClass'];
+		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Inheritance instead of composition", details));
 		out_component['IIC'] = 'Y';
 	}
-	else 
+	else
 		out_component['IIC'] = 'N'
 
-	if (component['multipleBooleans'].length > thresholds['N_bools']){
+	if (component['multipleBooleans'].length > thresholds['N_bools']) {
 		has_smells = true;
-		details = "Number of bool states: "+component['multipleBooleans'].length+"; Bools: "+component['multipleBooleans'][0].line;
-		csv_smells.push(createSmell(component['file_url'],out_component['Component'],"Multiple Booleans for State", details));
+		details = "Number of bool states: " + component['multipleBooleans'].length + "; Bools: " + component['multipleBooleans'][0].line;
+		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Multiple Booleans for State", details));
 		out_component['MB'] = 'Y';
 	}
-	else 
+	else
 		out_component['MB'] = 'N'
 
-	if (component['forceUpdate'].length > 0){
+	if (component['forceUpdate'].length > 0) {
 		has_smells = true;
 		details = '';
-		for(var forceUpdate of component['forceUpdate'])
-			details += "Line "+forceUpdate['line_number']+": "+forceUpdate['line']+"\n";
+		for (var forceUpdate of component['forceUpdate'])
+			details += "Line " + forceUpdate['line_number'] + ": " + forceUpdate['line'] + "\n";
 		// details = "Line "+component['forceUpdate']['line_number']+": "+component['forceUpdate']['line'];
-		csv_smells.push(createSmell(component['file_url'],out_component['Component'],"Force Update", details));
+		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Force Update", details));
 		out_component['FU'] = component['forceUpdate'].length;
 	}
 	else
 		out_component['FU'] = 0;
 
-	if (component['dom_manipulation'].length > 0){
+	if (component['dom_manipulation'].length > 0) {
 		has_smells = true;
 		details = '';
-		for(var dom_manipulation of component['dom_manipulation'])
-			details += "Line "+dom_manipulation['line_number']+": "+dom_manipulation['line']+"\n";
+		for (var dom_manipulation of component['dom_manipulation'])
+			details += "Line " + dom_manipulation['line_number'] + ": " + dom_manipulation['line'] + "\n";
 		// details = "Line "+component['dom_manipulation']['line_number']+": "+component['dom_manipulation']['line'];
-		csv_smells.push(createSmell(component['file_url'],out_component['Component'],"Direct DOM Manipulation", details));
+		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Direct DOM Manipulation", details));
 		out_component['DOM'] = component['dom_manipulation'].length;
 	}
-	else 
+	else
 		out_component['DOM'] = 0;
 
 	out_component['JSX'] = component['JSXOutsideRender'].length;
-	if (out_component['JSX'] > thresholds['NM_JSX']){
+	if (out_component['JSX'] > thresholds['NM_JSX']) {
 		has_smells = true;
-		details = "Methods with JSX: "+component['JSXOutsideRender'];
-		csv_smells.push(createSmell(component['file_url'],out_component['Component'],"JSX outside the render method", details));
+		details = "Methods with JSX: " + component['JSXOutsideRender'];
+		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "JSX outside the render method", details));
 	}
 
-	if (component['uncontrolled'].length > 0){
+	if (component['uncontrolled'].length > 0) {
 		has_smells = true;
 		details = '';
-		for(var uncontrolled of component['uncontrolled'])
-			details += "Line "+uncontrolled['line_number']+": "+uncontrolled['line']+"\n";
+		for (var uncontrolled of component['uncontrolled'])
+			details += "Line " + uncontrolled['line_number'] + ": " + uncontrolled['line'] + "\n";
 
-		csv_smells.push(createSmell(component['file_url'],out_component['Component'],"Uncontrolled component", details));
+		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Uncontrolled component", details));
 		out_component['UC'] = component['uncontrolled'].length;
 	}
-	else 
+	else
 		out_component['UC'] = 0;
 
-	if (component['propsInitialState'].length > 0){
+	if (component['propsInitialState'].length > 0) {
 		has_smells = true;
 		details = '';
-		for(var propsInitialState of component['propsInitialState'])
-			details += "Lines "+propsInitialState['line_start']+" - "+propsInitialState['line_end']+": \n"+propsInitialState['line'];
+		for (var propsInitialState of component['propsInitialState'])
+			details += "Lines " + propsInitialState['line_start'] + " - " + propsInitialState['line_end'] + ": \n" + propsInitialState['line'];
 
-		csv_smells.push(createSmell(component['file_url'],out_component['Component'],"Props in initial state", details));
+		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Props in initial state", details));
 		out_component['PIS'] = component['propsInitialState'].length;
 	}
-	else 
+	else
 		out_component['PIS'] = 0;
 
 	if (component['anyType'].length > 0) {
 		has_smells = true;
 		details = '';
-		for(var anyType of component['anyType'])
+		for (var anyType of component['anyType'])
 			details += "Line " + anyType['line_start'] + " - " + anyType['line_end'] + ": \n" + anyType['line'];
-	
+
 		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Any Type", details));
 		out_component['ANY'] = component['anyType'].length;
 	}
 	else
 		out_component['ANY'] = 0;
-		
+
 	if (component['nonNull'].length > 0) {
 		has_smells = true;
 		details = '';
-		for(var nonNull of component['nonNull'])
+		for (var nonNull of component['nonNull'])
 			details += "Line " + nonNull['line_start'] + " - " + nonNull['line_end'] + ": \n" + nonNull['line'];
-				
-			csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Many Non-Null Assertions", details));
-			out_component['NNA'] = component['nonNull'].length;
+
+		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Many Non-Null Assertions", details));
+		out_component['NNA'] = component['nonNull'].length;
 	}
 	else
 		out_component['NNA'] = 0;
@@ -209,7 +209,7 @@ for (const [key,component] of Object.entries(all_components)){
 	if (component['enumImplicit'].length > 0) {
 		has_smells = true;
 		details = '';
-		for(var enumImplicit of component['enumImplicit'])
+		for (var enumImplicit of component['enumImplicit'])
 			details += "Line " + enumImplicit['line_start'] + " - " + enumImplicit['line_end'] + ": \n" + enumImplicit['line'];
 
 		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Enum Implicit Values", details));
@@ -218,55 +218,55 @@ for (const [key,component] of Object.entries(all_components)){
 	else
 		out_component['EIV'] = 0;
 
-	if (component['childrenPitfall'].length > 0) {
+	if (component['overlyFlexible'].length > 0) {
 		has_smells = true;
 		details = '';
-		for(var childrenPitfall of component['childrenPitfall'])
-			details += "Line " + childrenPitfall['line_start'] + " - " + childrenPitfall['line_end'] + ": \n" + childrenPitfall['line'];
-			
-		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Children Props Pitfall", details));
-		out_component['CPP'] = component['childrenPitfall'].length;
+		for (var overlyFlexible of component['overlyFlexible'])
+			details += "Line " + overlyFlexible['line_start'] + " - " + overlyFlexible['line_end'] + ": \n" + overlyFlexible['line'];
+
+		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Overly Flexible Props", details));
+		out_component['OFP'] = component['overlyFlexible'].length;
 	}
 	else
-		out_component['CPP'] = 0;
+		out_component['OFP'] = 0;
 
 	if (component['missingUnionType'].length > 0) {
 		has_smells = true;
 		details = '';
-		for(var missingUnionType of component['missingUnionType'])
+		for (var missingUnionType of component['missingUnionType'])
 			details += "Line " + missingUnionType['line_start'] + " - " + missingUnionType['line_end'] + ": \n" + missingUnionType['line'];
-				
+
 		csv_smells.push(createSmell(component['file_url'], out_component['Component'], "Missing Union Type", details));
 		out_component['MUT'] = component['missingUnionType'].length;
 	}
 	else
 		out_component['MUT'] = 0;
 
-	if (has_smells){
+	if (has_smells) {
 		number_of_smell_components++;
 		output_components.push(out_component);
-	}	
+	}
 }
 
-if (output_files.length > 0){
-	const output_files_t = output_files.reduce((out, {id, ...x}) => { out[id] = x; return out}, {});
-	console.table(output_files_t,['id', 'Large File', 'LOC', 'N_Components', 'N_Functions', 'N_Imports']);
-	csvWriter('files_smells.csv', output_files,Object.keys(output_files[0]),"files");
-}else
+if (output_files.length > 0) {
+	const output_files_t = output_files.reduce((out, { id, ...x }) => { out[id] = x; return out }, {});
+	console.table(output_files_t, ['id', 'Large File', 'LOC', 'N_Components', 'N_Functions', 'N_Imports']);
+	csvWriter('files_smells.csv', output_files, Object.keys(output_files[0]), "files");
+} else
 	console.log("There are no Large Files!");
 
 
-if (output_components.length > 0){
-	const output_components_t = output_components.reduce((out, {id, ...x}) => { out[id] = x; return out}, {});
+if (output_components.length > 0) {
+	const output_components_t = output_components.reduce((out, { id, ...x }) => { out[id] = x; return out }, {});
 	console.table(output_components_t);
 
-	console.log("Code smells (LC: Large component, TP:Too many props, IIC: Inheritance insteadof Composition; MB: Multiple Booleans for State; PIS: props in Initial State; DOM: Directly DOM manipulations; JSX: JSX outside the render method; FU: Force update; UC: Uncontrolled component; ANY: Any Type; NNA: Many Non-Null Assertions; MUT: Missing Union Types Abstraction; EIV: Enum Implicit Values; CPP: Children Props Pitfall)\n");
+	console.log("Code smells (LC: Large component, TP:Too many props, IIC: Inheritance insteadof Composition; MB: Multiple Booleans for State; PIS: props in Initial State; DOM: Directly DOM manipulations; JSX: JSX outside the render method; FU: Force update; UC: Uncontrolled component; ANY: Any Type; NNA: Many Non-Null Assertions; MUT: Missing Union Types Abstraction; EIV: Enum Implicit Values; OFP: Overly Flexible Props)\n");
 
-	csvWriter('components_smells.csv', csv_smells,Object.keys(csv_smells[0]),"components");
-}else
+	csvWriter('components_smells.csv', csv_smells, Object.keys(csv_smells[0]), "components");
+} else
 	console.log("There are no components with smells");
 
-console.log('Number of analyzed files: ',all_files.length);
+console.log('Number of analyzed files: ', all_files.length);
 console.log('Number of analyzed components', all_components.length);
 
 

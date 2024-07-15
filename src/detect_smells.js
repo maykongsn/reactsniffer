@@ -23,7 +23,7 @@ module.exports = function(ast) {
 			'nonNull': [],
 			'enumImplicit': [],
 			'multipleBooleans': [],
-			'childrenPitfall': [],
+			'overlyFlexible': [],
 			'missingUnionType': [],
 		};
 		
@@ -181,10 +181,10 @@ function recursive_search(item,component,components,functions){
 
 		if(
 			value.type === 'VariableDeclarator' &&
-      value.init &&
-      value.init.callee &&
-      value.init.callee.name === 'useState' &&
-      value.init.arguments.length > 0
+      		value.init &&
+      		value.init.callee &&
+      		value.init.callee.name === 'useState' &&
+      		value.init.arguments.length > 0
 		) {
 			if(value.init.arguments[0].type === 'BooleanLiteral') {
 				multipleBooleans = {};
@@ -207,6 +207,70 @@ function recursive_search(item,component,components,functions){
 			component['missingUnionType'].push(missingUnionType);
 		}
 
+		if (
+			value.type == "VariableDeclarator" &&
+			value.init &&
+			value.init.type == "ArrowFunctionExpression" &&
+			value.init.params.length > 0 &&
+			value.init.params[0].typeAnnotation
+		) {
+			const typeAnnotation = value.init.params[0].typeAnnotation.typeAnnotation;
+			if (check_record_string_unknown(typeAnnotation) || check_intersection_record(typeAnnotation)) {
+				overlyFlexible = {};
+
+				overlyFlexible['line_start'] = value['loc']['start']['line'];
+				overlyFlexible['line_end'] = value['loc']['end']['line'];
+				overlyFlexible['line'] = read_files.get_lines(component['file_url'], overlyFlexible['line_start'], overlyFlexible['line_end']);
+				component['overlyFlexible'].push(overlyFlexible);
+			}
+		}
+
+		if (value == "FunctionDeclaration" && (item.params.length > 0 && item.params[0].typeAnnotation)) {
+			const typeAnnotation = item.params[0].typeAnnotation.typeAnnotation;
+			if ((check_record_string_unknown(typeAnnotation) || check_intersection_record(typeAnnotation))) {
+				overlyFlexible = {};
+
+				overlyFlexible['line_start'] = item['loc']['start']['line'];
+				overlyFlexible['line_end'] = item['loc']['end']['line'];
+				overlyFlexible['line'] = read_files.get_lines(component['file_url'], overlyFlexible['line_start'], overlyFlexible['line_end']);
+				component['overlyFlexible'].push(overlyFlexible);
+			}
+		}
+
+		if (value === "TSTypeAliasDeclaration" && (check_record_string_unknown(item.typeAnnotation) || check_intersection_record(item.typeAnnotation))) {
+			overlyFlexible = {};
+
+			component['name'] = item['id']['name']
+			overlyFlexible['line_start'] = item['loc']['start']['line'];
+			overlyFlexible['line_end'] = item['loc']['end']['line'];
+			overlyFlexible['line'] = read_files.get_lines(component['file_url'], overlyFlexible['line_start'], overlyFlexible['line_end']);
+			component['overlyFlexible'].push(overlyFlexible);
+
+			components.push(component)
+		}
+
+		if (value === "TSInterfaceDeclaration" && item.extends?.length > 0) {
+			item.extends.forEach((extend) => {
+				if (
+					extend.type === "TSExpressionWithTypeArguments" &&
+					extend.expression.type === "Identifier" &&
+					extend.expression.name === "Record" &&
+					extend.typeParameters.params[0].type === "TSStringKeyword" &&
+					extend.typeParameters.params[1].type === "TSUnknownKeyword"
+				) {
+					overlyFlexible = {};
+
+					component['name'] = item['id']['name']
+					overlyFlexible['line_start'] = item['loc']['start']['line'];
+					overlyFlexible['line_end'] = item['loc']['end']['line'];
+					overlyFlexible['line'] = read_files.get_lines(component['file_url'], overlyFlexible['line_start'], overlyFlexible['line_end']);
+					component['overlyFlexible'].push(overlyFlexible);
+
+					components.push(component)
+				}
+			})
+		}
+
 		if (value.type == 'TSEnumMember') {
 			if (value.initializer == undefined) {
 				enumImplicit = {};
@@ -223,23 +287,7 @@ function recursive_search(item,component,components,functions){
 				}
 				components.push(component);
 			}
-    }
-		
-		if(value.type == "TSPropertySignature") {
-			if(value.key.name == 'children') {
-				if(value.typeAnnotation.typeAnnotation.type == "TSUndefinedKeyword" || value.typeAnnotation.typeAnnotation.type == "TSNeverKeyword") {
-					childrenPitfall = {};
-					
-					component['name'] = 'children'
-					childrenPitfall['line_start'] = value['loc']['start']['line'];
-					childrenPitfall['line_end'] = value['loc']['end']['line'];
-					childrenPitfall['line'] = read_files.get_lines(component['file_url'], childrenPitfall['line_start'], childrenPitfall['line_end']);
-					
-					component['childrenPitfall'].push(childrenPitfall);
-					components.push(component)
-				}
-			}
-		}
+    	}
 
 		if (value.type == "TSAnyKeyword") {
 			anyType = {};
