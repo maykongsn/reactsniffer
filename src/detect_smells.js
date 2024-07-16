@@ -65,6 +65,24 @@ function check_props_initial_state(item, params){
 	return aux;
 }
 
+function check_record_string_unknown(item) {
+	return item.type === "TSTypeReference" &&
+		item.typeName.type === "Identifier" &&
+		item.typeName.name === "Record" &&
+		item.typeParameters.params[0].type === "TSStringKeyword" &&
+		item.typeParameters.params[1].type === "TSUnknownKeyword"
+}
+
+function check_intersection_record(item) {
+	return item.type === "TSIntersectionType" &&
+		item.types.some((element) =>
+			element.type === "TSTypeReference" &&
+			element.typeName.type === "Identifier" &&
+			element.typeName.name === "Record" &&
+			element.typeParameters.params[0].type === "TSStringKeyword" &&
+			element.typeParameters.params[1].type === "TSUnknownKeyword")
+}
+
 // function recursive_search(data,match,parent_key,parent_value,component,components,attributes,functions,is_input){
 function recursive_search(item,component,components,functions){
 
